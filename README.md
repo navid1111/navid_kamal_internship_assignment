@@ -48,13 +48,13 @@ assignment/
 - **mAP50:** ↑ 0.94
 - **mAP50-95:** ↑ 0.68
 
-![Loss and Metrics Curves](runs\detect\runs\train\final_try_baseline_fixed_5\results.png)
+![Loss and Metrics Curves](runs/detect/runs/train/final_try_baseline_fixed_5/results.png)
 
 ---
 
 ## Confusion Matrix
 
-![Confusion Matrix](runs\detect\runs\train\final_try_baseline_fixed_5\confusion_matrix_normalized.png)
+![Confusion Matrix](runs/detect/runs/train/final_try_baseline_fixed_5/confusion_matrix_normalized.png)
 
 ---
 
