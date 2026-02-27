@@ -19,7 +19,7 @@ ENV/
 env/
 
 # YOLO / ML
-runs/
+
 *.pt
 *.onnx
 *.engine
