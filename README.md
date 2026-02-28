@@ -94,7 +94,7 @@ assignment/
 ## Notes
 - The dataset and all outputs are ignored by git for privacy and size reasons.
 - For best results, always check class coverage and rebalance splits if needed.
-- W&B project: [-detection](https://wandb.ai/navidkamal-islamic-university-of-technology/-detection)
+- W&B project: [retail_object-detection](https://wandb.ai/navidkamal-islamic-university-of-technology/retail_object-detection)
 
 ---
 
