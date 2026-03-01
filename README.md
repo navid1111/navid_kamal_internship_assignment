@@ -2,6 +2,7 @@
 
 ## Overview
 This project is focused on object detection for retail product classes using YOLOv8 and Weights & Biases (W&B) for experiment tracking. The dataset is highly imbalanced and contains 76 classes. The project demonstrates the impact of proper dataset splitting, experiment tracking, and orchestrated ML pipelines on model performance.
+**(https://docs.google.com/document/d/18CBayr0DgXjQuaPDHvLke60SV4dzWMt4Wb3WaTS6aAA/edit?usp=sharing)**
 
 **Key Features:**
 - Automated ML pipeline using Apache Airflow + Docker
