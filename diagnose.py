@@ -7,18 +7,15 @@ def analyze_dataset(data_yaml_path):
     with open(data_yaml_path) as f:
         data = yaml.safe_load(f)
 
-    # Get the directory containing the YAML file for relative path resolution
     yaml_dir = os.path.dirname(os.path.abspath(data_yaml_path))
+    results = {}
 
     for split in ['train', 'val', 'test']:
         if split not in data:
             continue
 
         image_path = data[split]
-
-        # Make paths absolute relative to the YAML file location
         image_path = os.path.normpath(os.path.join(yaml_dir, image_path))
-        # Convert images path to labels path
         label_path = image_path.replace("images", "labels")
 
         class_counts = Counter()
@@ -36,8 +33,10 @@ def analyze_dataset(data_yaml_path):
                     class_id = int(line.split()[0])
                     class_counts[class_id] += 1
 
-        print(f"  Total objects: {sum(class_counts.values())}")
-        print(f"  Classes present: {len(class_counts)}")
+        total = sum(class_counts.values())
+        num_classes = len(class_counts)
+        print(f"  Total objects: {total}")
+        print(f"  Classes present: {num_classes}")
 
         if class_counts:
             max_cls = max(class_counts.values())
@@ -45,4 +44,24 @@ def analyze_dataset(data_yaml_path):
             print(f"  Imbalance ratio: {max_cls/min_cls:.1f}x")
             print(f"  Per-class counts: {dict(class_counts)}")
 
-analyze_dataset('dataset/dataset_stratified/data.yaml')
+            results[split] = {
+                "num_classes":     num_classes,
+                "total_objects":   total,
+                "max_cls":         max_cls,
+                "min_cls":         min_cls,
+                "imbalance_ratio": round(max_cls / min_cls, 1),
+                "class_counts":    dict(class_counts),
+            }
+
+    return results  # e.g. {"train": {...}, "val": {...}, "test": {...}}
+
+
+if __name__ == "__main__":
+    results = analyze_dataset('dataset/dataset_stratified/data.yaml')
+
+    # Example: access individual values
+    print("\n── Summary ──")
+    for split, stats in results.items():
+        print(f"{split}: {stats['num_classes']} classes | "
+              f"imbalance {stats['imbalance_ratio']}x | "
+              f"{stats['total_objects']} objects")

@@ -12,12 +12,16 @@ from collections import defaultdict
 import yaml
 
 # Configuration
-SOURCE_DIR = Path("dataset/dataset")
-OUTPUT_DIR = Path("dataset/dataset_stratified")
+_DEFAULT_SOURCE = Path("dataset/dataset")
+_DEFAULT_OUTPUT = Path("dataset/dataset_stratified")
 TRAIN_RATIO = 0.8
 VAL_RATIO = 0.1
 TEST_RATIO = 0.1
 RANDOM_SEED = 42
+
+# Module-level (overridden per-call in main())
+SOURCE_DIR = _DEFAULT_SOURCE
+OUTPUT_DIR = _DEFAULT_OUTPUT
 
 random.seed(RANDOM_SEED)
 
@@ -168,11 +172,24 @@ def create_data_yaml(output_dir, original_yaml_path):
         yaml.dump(data, f, default_flow_style=False)
 
 
-def main():
+def main(base_dir=None):
+    """Rebuild splits. *base_dir* is prepended to the default source/output paths."""
+    global SOURCE_DIR, OUTPUT_DIR
+
+    if base_dir is not None:
+        base = Path(base_dir)
+        SOURCE_DIR = base / _DEFAULT_SOURCE
+        OUTPUT_DIR = base / _DEFAULT_OUTPUT
+    else:
+        SOURCE_DIR = _DEFAULT_SOURCE
+        OUTPUT_DIR = _DEFAULT_OUTPUT
+
     print("=" * 60)
     print("REBUILDING DATASET WITH STRATIFIED SPLITS")
+    print(f"  SOURCE_DIR = {SOURCE_DIR}")
+    print(f"  OUTPUT_DIR = {OUTPUT_DIR}")
     print("=" * 60)
-    
+
     # Clean output directory
     if OUTPUT_DIR.exists():
         shutil.rmtree(OUTPUT_DIR)

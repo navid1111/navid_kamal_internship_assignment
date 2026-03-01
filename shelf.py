@@ -113,6 +113,50 @@ def print_summary_table(share: dict, counts: Counter):
     print("=" * 55 + "\n")
 
 
+def run_from_model(
+    model_path,
+    test_images="dataset/dataset_stratified/test/images",
+    output_json="final_try_results.json",
+    output_chart="share_of_shelf.png",
+    conf=0.5,
+    iou=0.5,
+):
+    """Run predictions with a trained model and compute share-of-shelf analytics."""
+    from ultralytics import YOLO
+
+    model = YOLO(model_path)
+    results = model.predict(
+        source=test_images,
+        conf=conf,
+        iou=iou,
+        save=False,
+        verbose=False,
+    )
+
+    # Convert YOLO results to the JSON format expected by shelf helpers
+    predictions = []
+    for r in results:
+        preds = []
+        for i in range(len(r.boxes)):
+            cls_id = int(r.boxes.cls[i])
+            preds.append({"class_name": r.names[cls_id], "class": cls_id})
+        predictions.append({"predictions": preds})
+
+    with open(output_json, "w") as f:
+        import json
+        json.dump(predictions, f, indent=2)
+    print(f"📂 Predictions saved to: {output_json}")
+
+    class_counts = count_detections(predictions)
+    if not class_counts:
+        print("❌ No detections found.")
+        return
+
+    share = calculate_share_of_shelf(class_counts)
+    print_summary_table(share, class_counts)
+    plot_share_of_shelf(share, class_counts, output_path=output_chart)
+
+
 def main():
     # Locate results JSON — try common paths
     candidate_paths = [
