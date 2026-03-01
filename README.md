@@ -346,7 +346,7 @@ Wait for all services to be healthy (check with `docker compose ps`).
   - **Username:** `airflow`
   - **Password:** `airflow`
 
-![Airflow Login](docs/airflow_login.png)
+![Airflow Pipeline](branch_dag-graph%20%281%29.png)
 
 **7. Trigger the DAG:**
 - After logging in, you'll see the DAG list
@@ -585,6 +585,8 @@ docker compose logs -f airflow-worker
 ![Confusion Matrix](runs/detect/runs/train/final_try_baseline_fixed_5/confusion_matrix_normalized.png)
 
 ---
+## Share of Shelf
+![Airflow Pipeline](share_of_shelf.png)
 
 ## Key Pipeline Components
 
