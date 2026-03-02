@@ -51,4 +51,4 @@ def check_class_coverage(data_yaml_path):
             in_val = split_counts['val'].get(cls, 0)
             print(f"  Class {cls}: {count} train, {in_val} val examples")
 
-check_class_coverage('dataset/dataset_stratified/data.yaml')
+check_class_coverage('dataset/dataset/data.yaml')

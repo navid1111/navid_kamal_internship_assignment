@@ -57,7 +57,7 @@ def analyze_dataset(data_yaml_path):
 
 
 if __name__ == "__main__":
-    results = analyze_dataset('dataset/dataset_stratified/data.yaml')
+    results = analyze_dataset('dataset/dataset/data.yaml')
 
     # Example: access individual values
     print("\n── Summary ──")
