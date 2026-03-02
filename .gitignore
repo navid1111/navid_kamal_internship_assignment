@@ -32,7 +32,7 @@ wandb/
 *.wandb
 
 # Dataset
-dataset/
+
 
 # Cache files
 *.cache
