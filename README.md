@@ -12,6 +12,8 @@ This project is focused on object detection for retail product classes using YOL
 - Reproducible, containerized environment
 
 ---
+**How To Run On Google Colab:**
+**(https://colab.research.google.com/drive/1kQgV7Y1WdnaFq2ovuexW22Cbaxhha4hN?usp=sharing)**
 
 ## Architecture: Docker + Apache Airflow
 
