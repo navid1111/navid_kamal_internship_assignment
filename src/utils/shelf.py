@@ -1,8 +1,4 @@
-"""
-Share of Shelf Analytics
-Treats the entire test dataset as a single representative shelf.
-Calculates and visualizes Percentage Share of Shelf per product class (SKU).
-"""
+"""Share of Shelf Analytics - Calculate product shelf presence metrics."""
 
 import json
 import os
@@ -11,6 +7,7 @@ import matplotlib.patches as mpatches
 import numpy as np
 from collections import Counter
 from pathlib import Path
+from ultralytics import YOLO
 
 
 def load_results(json_path: str) -> list:
@@ -98,102 +95,57 @@ def plot_share_of_shelf(share: dict, counts: Counter, output_path: str = "share_
     plt.close()
 
 
-def print_summary_table(share: dict, counts: Counter):
-    """Print a sorted summary table to the console."""
-    sorted_items = sorted(share.items(), key=lambda x: x[1], reverse=True)
-    total = sum(counts.values())
-
-    print("\n" + "=" * 55)
-    print(f"{'Rank':<5} {'Class':<25} {'Count':>7} {'Share':>8}")
-    print("=" * 55)
-    for rank, (cls, pct) in enumerate(sorted_items, 1):
-        print(f"{rank:<5} {cls:<25} {counts[cls]:>7,} {pct:>7.2f}%")
-    print("=" * 55)
-    print(f"{'TOTAL':<5} {'':<25} {total:>7,} {'100.00%':>8}")
-    print("=" * 55 + "\n")
-
-
 def run_from_model(
-    model_path,
-    test_images="dataset/dataset_stratified/test/images",
-    output_json="final_try_results.json",
-    output_chart="share_of_shelf.png",
-    conf=0.5,
-    iou=0.5,
-):
-    """Run predictions with a trained model and compute share-of-shelf analytics."""
-    from ultralytics import YOLO
-
+    model_path: str,
+    test_images: str,
+    output_json: str = "final_results.json",
+    output_chart: str = "share_of_shelf.png",
+) -> None:
+    """Run inference on test images and generate shelf analytics."""
     model = YOLO(model_path)
-    results = model.predict(
-        source=test_images,
-        conf=conf,
-        iou=iou,
-        save=False,
-        verbose=False,
-    )
 
-    # Convert YOLO results to the JSON format expected by shelf helpers
-    predictions = []
-    for r in results:
-        preds = []
-        for i in range(len(r.boxes)):
-            cls_id = int(r.boxes.cls[i])
-            preds.append({"class_name": r.names[cls_id], "class": cls_id})
-        predictions.append({"predictions": preds})
+    # Run predictions
+    results_raw = model.predict(source=test_images, verbose=False)
 
+    # Convert to JSON format
+    results_list = []
+    for result in results_raw:
+        entry = {
+            "image_path": str(result.path),
+            "predictions": [
+                {
+                    "class": int(box.cls),
+                    "class_name": model.names[int(box.cls)],
+                    "confidence": float(box.conf),
+                    "bbox": box.xyxy[0].tolist() if len(box.xyxy) > 0 else [],
+                }
+                for box in result.boxes
+            ],
+        }
+        results_list.append(entry)
+
+    # Save to JSON
     with open(output_json, "w") as f:
-        import json
-        json.dump(predictions, f, indent=2)
-    print(f"📂 Predictions saved to: {output_json}")
+        json.dump(results_list, f, indent=2)
+    print(f"✅ Results saved to: {output_json}")
 
-    class_counts = count_detections(predictions)
-    if not class_counts:
-        print("❌ No detections found.")
-        return
-
+    # Count and plot
+    class_counts = count_detections(results_list)
     share = calculate_share_of_shelf(class_counts)
-    print_summary_table(share, class_counts)
-    plot_share_of_shelf(share, class_counts, output_path=output_chart)
 
+    # Print summary
+    print("\n── Detection Summary ──")
+    for cls, pct in sorted(share.items(), key=lambda x: x[1], reverse=True):
+        print(f"  {cls}: {pct:.2f}% (n={class_counts[cls]})")
 
-def main():
-    # Locate results JSON — try common paths
-    candidate_paths = [
-        "final_try_results.json",
-        "runs/detect/runs/train/final_try_baseline_fixed_5/final_try_results.json",
-        "runs/final_try_results.json",
-    ]
-
-    json_path = None
-    for path in candidate_paths:
-        if os.path.exists(path):
-            json_path = path
-            break
-
-    if json_path is None:
-        # Fallback: search recursively
-        matches = list(Path(".").rglob("final_try_results.json"))
-        if matches:
-            json_path = str(matches[0])
-
-    if json_path is None:
-        print("❌ Could not find final_try_results.json")
-        print("   Please place it in the working directory or update candidate_paths.")
-        return
-
-    print(f"📂 Loading results from: {json_path}")
-    results = load_results(json_path)
-
-    class_counts = count_detections(results)
-    if not class_counts:
-        print("❌ No detections found in results file. Check the JSON structure.")
-        return
-
-    share = calculate_share_of_shelf(class_counts)
-    print_summary_table(share, class_counts)
-    plot_share_of_shelf(share, class_counts, output_path="share_of_shelf.png")
+    # Plot
+    plot_share_of_shelf(share, class_counts, output_chart)
 
 
 if __name__ == "__main__":
-    main()
+    run_from_model(
+        model_path="runs/train/pipeline_run/weights/best.pt",
+        test_images="dataset/dataset_stratified/test/images",
+        output_json="final_results.json",
+        output_chart="share_of_shelf.png",
+    )

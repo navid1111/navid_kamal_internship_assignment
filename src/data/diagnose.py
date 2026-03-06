@@ -1,9 +1,12 @@
+"""Dataset quality analysis and diagnostics."""
+
 import os
 from collections import Counter
 import yaml
 
 
 def analyze_dataset(data_yaml_path):
+    """Analyze class distribution and imbalance in dataset splits."""
     with open(data_yaml_path) as f:
         data = yaml.safe_load(f)
 

@@ -1,9 +1,12 @@
-# check_splits.py
+"""Validate class coverage across dataset splits."""
+
 import os
 from collections import Counter
 import yaml
 
+
 def check_class_coverage(data_yaml_path):
+    """Check if all training classes appear in validation and test splits."""
     with open(data_yaml_path) as f:
         data = yaml.safe_load(f)
 
@@ -48,7 +51,8 @@ def check_class_coverage(data_yaml_path):
     print(f"\nClasses with <10 training examples (hardest to learn):")
     for cls, count in sorted(split_counts['train'].items(), key=lambda x: x[1]):
         if count < 10:
-            in_val = split_counts['val'].get(cls, 0)
-            print(f"  Class {cls}: {count} train, {in_val} val examples")
+            print(f"  Class {cls}: {count} examples")
 
-check_class_coverage('dataset/dataset/data.yaml')
+
+if __name__ == "__main__":
+    check_class_coverage('dataset/dataset_stratified/data.yaml')

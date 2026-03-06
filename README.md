@@ -298,11 +298,11 @@ assignment/
 ├── Dockerfile                      # Custom Airflow image with ML dependencies
 ├── .env                            # Environment variables
 ├── requirements.txt                # Python dependencies
-├── train.py                        # Training function (imported by DAG)
-├── baseline_eval.py                # Evaluation function (imported by DAG)
-├── rebuild_splits.py               # Dataset stratification function
-├── shelf.py                        # Share-of-shelf analytics
-├── diagnose.py                     # Dataset analysis
+├── src/                            # Main Python package
+│   ├── model/                      # Training + evaluation
+│   ├── data/                       # Data QA + split generation
+│   ├── utils/                      # GPU + shelf analytics
+│   └── pipeline/dags/              # Canonical DAG implementation
 ├── README.md                       # This file
 └── ...
 ```
@@ -429,28 +429,28 @@ wandb login
 
 **1. Analyze Dataset Quality:**
 ```bash
-python diagnose.py
+python -m src.data.diagnose
 ```
 - Analyzes class distribution and imbalance
 - Outputs statistics for train/val/test splits
 
 **2. Check Current Splits:**
 ```bash
-python check_splits.py
+python -m src.data.check_splits
 ```
 - Validates split quality
 - Reports missing classes per split
 
 **3. Rebuild Stratified Splits:**
 ```bash
-python rebuild_splits.py
+python -m src.data.rebuild_splits
 ```
 - Creates balanced train/val/test splits
 - Ensures class coverage across all splits
 
 **4. Train the Model:**
 ```bash
-python train.py
+python -m src.model.train
 ```
 - Trains YOLO11m on stratified dataset
 - Logs to W&B automatically
@@ -458,21 +458,21 @@ python train.py
 
 **5. Evaluate the Model:**
 ```bash
-python baseline_eval.py
+python -m src.model.eval
 ```
 - Runs validation on test set
 - Returns precision, recall, mAP50, mAP50-95
 
 **6. Run Share-of-Shelf Analytics:**
 ```bash
-python shelf.py
+python -m src.utils.shelf
 ```
 - Generates product shelf-share percentages
 - Creates visualization chart
 
 **7. Check GPU Availability:**
 ```bash
-python check_gpu.py
+python -m src.utils.gpu
 ```
 - Verifies CUDA and GPU status
 - Shows GPU device name and memory
@@ -491,16 +491,16 @@ docker compose up -d
 **2. Execute a script inside the worker container:**
 ```bash
 # Run diagnose
-docker compose exec airflow-worker python diagnose.py
+docker compose exec airflow-worker python -m src.data.diagnose
 
 # Run train
-docker compose exec airflow-worker python train.py
+docker compose exec airflow-worker python -m src.model.train
 
 # Run evaluation
-docker compose exec airflow-worker python baseline_eval.py
+docker compose exec airflow-worker python -m src.model.eval
 
 # Run shelf analytics
-docker compose exec airflow-worker python shelf.py
+docker compose exec airflow-worker python -m src.utils.shelf
 ```
 
 **3. Access the container shell:**
@@ -508,7 +508,7 @@ docker compose exec airflow-worker python shelf.py
 docker compose exec airflow-worker bash
 # Now you're inside the container with all dependencies available
 cd /opt/airflow/project
-python diagnose.py
+python -m src.data.diagnose
 ```
 
 ---
@@ -610,13 +610,13 @@ docker compose logs -f airflow-worker
 
 ### Scripts & Functions
 
-| Script | Function | Used In |
+| Module | Function | Used In |
 |--------|----------|---------|
-| `diagnose.py` | `analyze_dataset(yaml_path)` | check_data_quality task |
-| `rebuild_splits.py` | `main(base_dir)` | rebuild_splits task |
-| `train.py` | `run_training(data_yaml, model_base, ...)` | train_model task |
-| `baseline_eval.py` | `run_evaluation(model_path, data_yaml)` | evaluate_model task |
-| `shelf.py` | `run_from_model(model_path, test_images, ...)` | run_share_of_shelf task |
+| `src.data.diagnose` | `analyze_dataset(yaml_path)` | check_data_quality task |
+| `src.data.rebuild_splits` | `main(base_dir)` | rebuild_splits task |
+| `src.model.train` | `run_training(data_yaml, model_base, ...)` | train_model task |
+| `src.model.eval` | `run_evaluation(model_path, data_yaml)` | evaluate_model task |
+| `src.utils.shelf` | `run_from_model(model_path, test_images, ...)` | run_share_of_shelf task |
 
 ### Environment Variables (in `.env`)
 ```

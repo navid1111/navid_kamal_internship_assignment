@@ -1,4 +1,5 @@
-# baseline_eval.py
+"""Model evaluation module."""
+
 from ultralytics import YOLO
 
 
