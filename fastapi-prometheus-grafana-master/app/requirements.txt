@@ -1,0 +1,11 @@
+prometheus-fastapi-instrumentator
+uvicorn
+fastapi
+python-multipart
+sqlalchemy
+pymysql
+cryptography
+pillow
+numpy
+onnxruntime
+opencv-python-headless
