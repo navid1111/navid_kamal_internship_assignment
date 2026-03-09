@@ -11,6 +11,10 @@ rebuild_splits   skip_rebuild
         ↓
    train_model
         ↓
+  benchmark_model
+        ↓
+  export_to_onnx
+        ↓
   evaluate_model
         ↓
  run_share_of_shelf
@@ -31,6 +35,8 @@ if _PROJECT_ROOT not in sys.path:
 from src.data.diagnose import analyze_dataset
 from src.data.rebuild_splits import main as rebuild_main
 from src.model.train import run_training
+from src.model.benchmark import run_benchmark
+from src.model.export_onnx import export_to_onnx
 from src.model.eval import run_evaluation
 from src.utils.shelf import run_from_model
 from src.utils.gpu import check_gpu_availability
@@ -114,17 +120,50 @@ def branch_dag():
         )
         return best
 
-    # ── 6. Evaluate model ────────────────────────────────────
+    # ── 6. Benchmark model ───────────────────────────────────
     @task.python
-    def evaluate_model(model_path: str):
+    def benchmark_model(model_path: str):
+        """Profile inference speed and throughput."""
+        metrics = run_benchmark(
+            model_path=model_path,
+            imgsz=runtime.imgsz,
+            batch=1,
+            device=runtime.device,
+        )
+        return {"model_path": model_path, "benchmark": metrics}
+
+    # ── 7. Export to ONNX ────────────────────────────────────
+    @task.python
+    def export_onnx(benchmark_result: dict):
+        """Convert trained model to ONNX format."""
+        onnx_path = export_to_onnx(
+            model_path=benchmark_result["model_path"],
+            imgsz=runtime.imgsz,
+            dynamic=False,
+            simplify=True,
+        )
+        return {
+            "model_path": benchmark_result["model_path"],
+            "onnx_path": onnx_path,
+            "benchmark": benchmark_result["benchmark"],
+        }
+
+    # ── 8. Evaluate model ────────────────────────────────────
+    @task.python
+    def evaluate_model(export_result: dict):
         """Validate the trained model and return key metrics."""
         metrics = run_evaluation(
-            model_path=model_path,
+            model_path=export_result["model_path"],
             data_yaml=STRATIFIED_YAML,
         )
-        return {"model_path": model_path, "metrics": metrics}
+        return {
+            "model_path": export_result["model_path"],
+            "onnx_path": export_result["onnx_path"],
+            "metrics": metrics,
+            "benchmark": export_result["benchmark"],
+        }
 
-    # ── 7. Share-of-Shelf analytics ──────────────────────────
+    # ── 9. Share-of-Shelf analytics ──────────────────────────
     @task.python
     def run_share_of_shelf(eval_result: dict):
         """Run predictions on test images and compute shelf-share percentages."""
@@ -134,30 +173,36 @@ def branch_dag():
             output_json=os.path.join(_P, "final_try_results.json"),
             output_chart=os.path.join(_P, "share_of_shelf.png"),
         )
-        return eval_result["model_path"]
+        return eval_result
 
-    # ── 8. Push to model registry ────────────────────────────
+    # ── 10. Push to model registry ───────────────────────────
     @task.python
-    def push_to_registry(model_path: str):
-        """Push the best checkpoint to the model registry."""
-        print(f"Pushing model to registry: {model_path}")
+    def push_to_registry(result: dict):
+        """Push the best checkpoint and ONNX model to registry."""
+        print(f"Pushing PyTorch model: {result['model_path']}")
+        print(f"Pushing ONNX model: {result['onnx_path']}")
+        print(f"Benchmark - FPS: {result['benchmark']['fps']:.2f}")
+        print(f"Metrics - mAP50: {result['metrics']['mAP50']:.3f}")
         # TODO: implement actual push (e.g. MLflow, W&B, S3)
-        print("Model registered successfully (placeholder).")
+        print("Models registered successfully (placeholder).")
 
     # ── DAG wiring ───────────────────────────────────────────
-    quality     = check_data_quality()
-    branch      = decide_rebuild(quality)
-    do_rebuild  = rebuild_splits()
-    do_skip     = skip_rebuild()
-    gate        = join()
-    gpu_info    = check_gpu()
-    model_path  = train_model()
-    eval_result = evaluate_model(model_path)
-    shelf_out   = run_share_of_shelf(eval_result)
-    push_to_registry(shelf_out)
+    quality         = check_data_quality()
+    branch          = decide_rebuild(quality)
+    do_rebuild      = rebuild_splits()
+    do_skip         = skip_rebuild()
+    gate            = join()
+    gpu_info        = check_gpu()
+    model_path      = train_model()
+    benchmark_res   = benchmark_model(model_path)
+    export_res      = export_onnx(benchmark_res)
+    eval_result     = evaluate_model(export_res)
+    shelf_result    = run_share_of_shelf(eval_result)
+    push_to_registry(shelf_result)
 
     branch >> [do_rebuild, do_skip] >> gate >> gpu_info >> model_path
 
 
 # Instantiate the DAG
 branch_dag()
+

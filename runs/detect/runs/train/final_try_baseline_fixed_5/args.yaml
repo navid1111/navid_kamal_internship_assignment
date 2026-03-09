@@ -2,7 +2,7 @@ task: detect
 mode: train
 model: yolo11m.pt
 data: dataset/dataset_stratified/data.yaml
-epochs: 100
+epochs: 20
 time: null
 patience: 15
 batch: 8
