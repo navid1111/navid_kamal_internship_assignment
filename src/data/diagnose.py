@@ -4,6 +4,8 @@ import os
 from collections import Counter
 import yaml
 
+from src.config import get_settings
+
 
 def analyze_dataset(data_yaml_path):
     """Analyze class distribution and imbalance in dataset splits."""
@@ -60,7 +62,7 @@ def analyze_dataset(data_yaml_path):
 
 
 if __name__ == "__main__":
-    results = analyze_dataset('dataset/dataset/data.yaml')
+    results = analyze_dataset(get_settings().runtime.dataset_yaml)
 
     # Example: access individual values
     print("\n── Summary ──")

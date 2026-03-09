@@ -11,20 +11,16 @@ from pathlib import Path
 from collections import defaultdict
 import yaml
 
-# Configuration
-_DEFAULT_SOURCE = Path("dataset/dataset")
-_DEFAULT_OUTPUT = Path("dataset/dataset_stratified")
-TRAIN_RATIO = 0.8
-VAL_RATIO = 0.1
-TEST_RATIO = 0.1
-RANDOM_SEED = 42
+from src.config import get_settings
+
+# Configuration defaults (resolved per-call from centralized settings)
+runtime = get_settings().runtime
+_DEFAULT_SOURCE = Path(runtime.source_dataset_dir)
+_DEFAULT_OUTPUT = Path(runtime.stratified_output_dir)
 
 # Module-level (overridden per-call in main())
 SOURCE_DIR = _DEFAULT_SOURCE
 OUTPUT_DIR = _DEFAULT_OUTPUT
-
-random.seed(RANDOM_SEED)
-
 
 def get_classes_in_label(label_path):
     """Extract unique class IDs from a label file."""
@@ -176,13 +172,16 @@ def main(base_dir=None):
     """Rebuild splits. *base_dir* is prepended to the default source/output paths."""
     global SOURCE_DIR, OUTPUT_DIR
 
+    runtime = get_settings().runtime
+    random.seed(runtime.random_seed)
+
     if base_dir is not None:
         base = Path(base_dir)
-        SOURCE_DIR = base / _DEFAULT_SOURCE
-        OUTPUT_DIR = base / _DEFAULT_OUTPUT
+        SOURCE_DIR = base / Path(runtime.source_dataset_dir)
+        OUTPUT_DIR = base / Path(runtime.stratified_output_dir)
     else:
-        SOURCE_DIR = _DEFAULT_SOURCE
-        OUTPUT_DIR = _DEFAULT_OUTPUT
+        SOURCE_DIR = Path(runtime.source_dataset_dir)
+        OUTPUT_DIR = Path(runtime.stratified_output_dir)
 
     print("=" * 60)
     print("REBUILDING DATASET WITH STRATIFIED SPLITS")
@@ -209,7 +208,10 @@ def main(base_dir=None):
     # Perform stratified split
     print("\nPerforming stratified split...")
     train_set, val_set, test_set = stratified_split(
-        all_images, TRAIN_RATIO, VAL_RATIO, TEST_RATIO
+        all_images,
+        runtime.train_ratio,
+        runtime.val_ratio,
+        runtime.test_ratio,
     )
     
     # Analyze splits

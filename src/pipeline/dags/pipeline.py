@@ -34,17 +34,18 @@ from src.model.train import run_training
 from src.model.eval import run_evaluation
 from src.utils.shelf import run_from_model
 from src.utils.gpu import check_gpu_availability
+from src.config import get_settings
 
-# ── Configuration (paths are relative to the project root) ───────
-_P = _PROJECT_ROOT  # short alias
-DATASET_YAML        = os.path.join(_P, "dataset/dataset_stratified/data.yaml")
-STRATIFIED_YAML     = os.path.join(_P, "dataset/dataset_stratified/data.yaml")
-EXPECTED_CLASSES     = 70
-IMBALANCE_THRESHOLD  = 10.0
+# ── Configuration (loaded from src.config.settings) ───────
+runtime = get_settings().runtime
+_P = runtime.project_root
+DATASET_YAML = runtime.dataset_yaml
+STRATIFIED_YAML = runtime.stratified_yaml
+EXPECTED_CLASSES = runtime.expected_classes
 
-MODEL_BASE    = os.path.join(_P, "yolo11m.pt")
-TRAIN_PROJECT = os.path.join(_P, "runs/train")
-TRAIN_NAME    = "pipeline_run"
+MODEL_BASE = runtime.model_base
+TRAIN_PROJECT = runtime.train_project
+TRAIN_NAME = runtime.train_name
 
 
 @dag(dag_id="branch_dag")
@@ -54,9 +55,13 @@ def branch_dag():
     @task.python
     def check_data_quality():
         """Analyse class balance / coverage and decide if splits need rebuilding."""
-        results = analyze_dataset(DATASET_YAML)
-
         needs_rebuild = not os.path.exists(STRATIFIED_YAML)
+
+        if needs_rebuild:
+            results = analyze_dataset(DATASET_YAML)
+        else:
+            results = analyze_dataset(STRATIFIED_YAML)
+
         for _split, stats in results.items():
             if stats.get("num_classes", 0) < EXPECTED_CLASSES:
                 needs_rebuild = True
@@ -105,7 +110,7 @@ def branch_dag():
             model_base=MODEL_BASE,
             project=TRAIN_PROJECT,
             name=TRAIN_NAME,
-            use_wandb=True,
+            use_wandb=runtime.use_wandb,
         )
         return best
 

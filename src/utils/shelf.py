@@ -9,6 +9,8 @@ from collections import Counter
 from pathlib import Path
 from ultralytics import YOLO
 
+from src.config import get_settings
+
 
 def load_results(json_path: str) -> list:
     """Load YOLO prediction results from JSON file."""
@@ -143,9 +145,10 @@ def run_from_model(
 
 
 if __name__ == "__main__":
+    runtime = get_settings().runtime
     run_from_model(
-        model_path="runs/train/pipeline_run/weights/best.pt",
-        test_images="dataset/dataset_stratified/test/images",
-        output_json="final_results.json",
-        output_chart="share_of_shelf.png",
+        model_path=str(Path(runtime.train_project) / runtime.train_name / "weights" / "best.pt"),
+        test_images=runtime.shelf_test_images,
+        output_json=runtime.shelf_output_json,
+        output_chart=runtime.shelf_output_chart,
     )

@@ -314,6 +314,46 @@ assignment/
 
 ---
 
+## Configuration (Runtime + Build-time)
+
+The project now supports centralized configuration through `src.config.get_settings()`.
+
+### Runtime configuration (Python/Airflow tasks)
+
+Precedence (highest to lowest):
+1. Environment variables (`APP_*`)
+2. YAML file (`APP_CONFIG_FILE`, default: `config/runtime.yaml`)
+3. Built-in defaults (`src/config/settings.py`)
+
+Quick start:
+```bash
+# Optional: create your runtime config
+cp config/runtime.yaml.example config/runtime.yaml
+
+# Optional: point to a custom config file
+export APP_CONFIG_FILE=config/runtime.yaml
+```
+
+Examples:
+```bash
+APP_TRAIN_EPOCHS=50 APP_USE_WANDB=false python -m src.model.train
+APP_DATASET_YAML=dataset/dataset/data.yaml python -m src.data.diagnose
+```
+
+### Build-time configuration (Docker image)
+
+Docker build args are sourced from `.env` via `BUILD_*` variables (see `.env.example`):
+- `BUILD_AIRFLOW_BASE_IMAGE`
+- `BUILD_TORCH_VERSION`, `BUILD_TORCHVISION_VERSION`, `BUILD_TORCHAUDIO_VERSION`
+- `BUILD_ULTRALYTICS_VERSION`, `BUILD_OPENCV_HEADLESS_VERSION`, etc.
+
+Then rebuild:
+```bash
+docker compose build
+```
+
+---
+
 ## How to Run
 
 ### Option 1: Using Apache Airflow (Recommended for Production)

@@ -1,15 +1,30 @@
 """Model evaluation module."""
 
+import os
+
 from ultralytics import YOLO
+
+from src.config import get_settings
 
 
 def run_evaluation(
-    model_path="runs/detect/runs/train/final_try_baseline_fixed_5/weights/best.pt",
-    data_yaml="dataset/dataset/data.yaml",
-    conf=0.5,
-    iou=0.5,
+    model_path=None,
+    data_yaml=None,
+    conf=None,
+    iou=None,
 ):
     """Validate a YOLO model and return a metrics dict."""
+    runtime = get_settings().runtime
+    model_path = model_path or os.path.join(
+        runtime.train_project,
+        runtime.train_name,
+        "weights",
+        "best.pt",
+    )
+    data_yaml = data_yaml or runtime.stratified_yaml
+    conf = conf if conf is not None else runtime.eval_conf
+    iou = iou if iou is not None else runtime.eval_iou
+
     model = YOLO(model_path)
 
     results = model.val(

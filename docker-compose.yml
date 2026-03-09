@@ -50,7 +50,20 @@ x-airflow-common:
   # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
   # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
   # image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:3.1.6}
-  build: .
+  build:
+    context: .
+    args:
+      AIRFLOW_BASE_IMAGE: ${BUILD_AIRFLOW_BASE_IMAGE:-apache/airflow:3.1.6}
+      TORCH_VERSION: ${BUILD_TORCH_VERSION:-2.6.0}
+      TORCHVISION_VERSION: ${BUILD_TORCHVISION_VERSION:-0.21.0}
+      TORCHAUDIO_VERSION: ${BUILD_TORCHAUDIO_VERSION:-2.6.0}
+      ULTRALYTICS_VERSION: ${BUILD_ULTRALYTICS_VERSION:-8.4.18}
+      OPENCV_HEADLESS_VERSION: ${BUILD_OPENCV_HEADLESS_VERSION:-4.13.0.92}
+      PYYAML_VERSION: ${BUILD_PYYAML_VERSION:-6.0.3}
+      PILLOW_VERSION: ${BUILD_PILLOW_VERSION:-12.1.1}
+      MATPLOTLIB_VERSION: ${BUILD_MATPLOTLIB_VERSION:-3.10.8}
+      SCIPY_VERSION: ${BUILD_SCIPY_VERSION:-1.17.1}
+      INSTALL_WANDB: ${BUILD_INSTALL_WANDB:-true}
   env_file:
     - ${ENV_FILE_PATH:-.env}
   environment:

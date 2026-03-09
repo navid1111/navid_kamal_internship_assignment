@@ -4,6 +4,8 @@ import os
 from collections import Counter
 import yaml
 
+from src.config import get_settings
+
 
 def check_class_coverage(data_yaml_path):
     """Check if all training classes appear in validation and test splits."""
@@ -55,4 +57,4 @@ def check_class_coverage(data_yaml_path):
 
 
 if __name__ == "__main__":
-    check_class_coverage('dataset/dataset_stratified/data.yaml')
+    check_class_coverage(get_settings().runtime.stratified_yaml)
