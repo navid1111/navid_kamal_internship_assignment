@@ -1,9 +1,16 @@
 import os
+import sys
 import yaml
 from pathlib import Path
 
 import wandb
 from ultralytics import YOLO
+
+# Support both `python -m src.model.train` and direct script execution.
+if __package__ in (None, ""):
+    project_root = Path(__file__).resolve().parents[2]
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
 
 from src.config import get_settings
 

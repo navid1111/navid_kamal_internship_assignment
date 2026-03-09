@@ -10,6 +10,8 @@ ARG PYYAML_VERSION=6.0.3
 ARG PILLOW_VERSION=12.1.1
 ARG MATPLOTLIB_VERSION=3.10.8
 ARG SCIPY_VERSION=1.17.1
+ARG ONNX_VERSION=1.17.0
+ARG ONNXRUNTIME_VERSION=1.20.1
 ARG INSTALL_WANDB=true
 
 USER root
@@ -30,5 +32,7 @@ RUN pip install --no-cache-dir --upgrade numpy pandas && \
   pyyaml==${PYYAML_VERSION} \
   pillow==${PILLOW_VERSION} \
   matplotlib==${MATPLOTLIB_VERSION} \
-  scipy==${SCIPY_VERSION} && \
+  scipy==${SCIPY_VERSION} \
+  onnx==${ONNX_VERSION} \
+  onnxruntime==${ONNXRUNTIME_VERSION} && \
   if [ "$INSTALL_WANDB" = "true" ]; then pip install --no-cache-dir wandb; fi

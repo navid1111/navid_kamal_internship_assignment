@@ -27,7 +27,8 @@ import os
 import sys
 
 # Ensure the project root is on sys.path so modules are importable
-_PROJECT_ROOT = os.environ.get("PYTHONPATH", "/opt/airflow/project")
+# In containers, PYTHONPATH is set to /opt/airflow/project; in local dev, use cwd
+_PROJECT_ROOT = os.environ.get("PYTHONPATH") or os.environ.get("APP_PROJECT_ROOT") or "/opt/airflow/project"
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
@@ -44,14 +45,17 @@ from src.config import get_settings
 
 # ── Configuration (loaded from src.config.settings) ───────
 runtime = get_settings().runtime
-_P = runtime.project_root
-DATASET_YAML = runtime.dataset_yaml
-STRATIFIED_YAML = runtime.stratified_yaml
+# Use _PROJECT_ROOT (from PYTHONPATH) to resolve relative paths, ensuring container compatibility
+DATASET_YAML = os.path.join(_PROJECT_ROOT, runtime.dataset_yaml) if not os.path.isabs(runtime.dataset_yaml) else runtime.dataset_yaml
+STRATIFIED_YAML = os.path.join(_PROJECT_ROOT, runtime.stratified_yaml) if not os.path.isabs(runtime.stratified_yaml) else runtime.stratified_yaml
 EXPECTED_CLASSES = runtime.expected_classes
 
-MODEL_BASE = runtime.model_base
-TRAIN_PROJECT = runtime.train_project
+MODEL_BASE = os.path.join(_PROJECT_ROOT, runtime.model_base) if not os.path.isabs(runtime.model_base) else runtime.model_base
+TRAIN_PROJECT = os.path.join(_PROJECT_ROOT, runtime.train_project) if not os.path.isabs(runtime.train_project) else runtime.train_project
 TRAIN_NAME = runtime.train_name
+SHELF_TEST_IMAGES = os.path.join(_PROJECT_ROOT, runtime.shelf_test_images) if not os.path.isabs(runtime.shelf_test_images) else runtime.shelf_test_images
+SHELF_OUTPUT_JSON = os.path.join(_PROJECT_ROOT, runtime.shelf_output_json) if not os.path.isabs(runtime.shelf_output_json) else runtime.shelf_output_json
+SHELF_OUTPUT_CHART = os.path.join(_PROJECT_ROOT, runtime.shelf_output_chart) if not os.path.isabs(runtime.shelf_output_chart) else runtime.shelf_output_chart
 
 
 @dag(dag_id="branch_dag")
@@ -140,7 +144,7 @@ def branch_dag():
             model_path=benchmark_result["model_path"],
             imgsz=runtime.imgsz,
             dynamic=False,
-            simplify=True,
+            simplify=False,
         )
         return {
             "model_path": benchmark_result["model_path"],
@@ -169,9 +173,9 @@ def branch_dag():
         """Run predictions on test images and compute shelf-share percentages."""
         run_from_model(
             model_path=eval_result["model_path"],
-            test_images=os.path.join(_P, "dataset/dataset_stratified/test/images"),
-            output_json=os.path.join(_P, "final_try_results.json"),
-            output_chart=os.path.join(_P, "share_of_shelf.png"),
+            test_images=SHELF_TEST_IMAGES,
+            output_json=SHELF_OUTPUT_JSON,
+            output_chart=SHELF_OUTPUT_CHART,
         )
         return eval_result
 
