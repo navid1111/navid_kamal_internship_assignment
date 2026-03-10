@@ -13,6 +13,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageDraw
+from prometheus_client import Counter, Gauge, Histogram
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, create_engine, text
@@ -93,6 +94,46 @@ app = FastAPI(title="Retail Detection API")
 onnx_session: ort.InferenceSession | None = None
 input_name: str | None = None
 input_hw: tuple[int, int] = (640, 640)
+
+# Custom Prometheus metrics for ML observability
+prediction_counter = Counter(
+    "ml_predictions_total",
+    "Total number of predictions made",
+    ["model_name"]
+)
+detection_counter = Counter(
+    "ml_detections_total", 
+    "Total number of objects detected",
+    ["class_name", "model_name"]
+)
+confidence_histogram = Histogram(
+    "ml_detection_confidence",
+    "Distribution of detection confidence scores",
+    ["class_name"],
+    buckets=(0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 1.0)
+)
+inference_time_histogram = Histogram(
+    "ml_inference_duration_ms",
+    "Model inference duration in milliseconds",
+    ["model_name"],
+    buckets=(10, 25, 50, 100, 200, 500, 1000, 2000, 5000)
+)
+detections_per_image = Histogram(
+    "ml_detections_per_image",
+    "Number of detections per image",
+    ["model_name"],
+    buckets=(0, 1, 2, 5, 10, 20, 50, 100)
+)
+avg_confidence_gauge = Gauge(
+    "ml_avg_confidence",
+    "Average confidence score of recent predictions",
+    ["model_name"]
+)
+low_confidence_counter = Counter(
+    "ml_low_confidence_detections_total",
+    "Count of low confidence detections (< 0.5)",
+    ["class_name", "model_name"]
+)
 
 
 class DetectionResult:
@@ -329,6 +370,26 @@ async def predict(
     annotated_name = f"annotated_{original_name}"
     annotated_path = UPLOAD_DIR / annotated_name
     Image.fromarray(annotated).save(annotated_path)
+
+    # Record Prometheus metrics
+    model_name = Path(MODEL_PATH).name
+    prediction_counter.labels(model_name=model_name).inc()
+    inference_time_histogram.labels(model_name=model_name).observe(inference_ms)
+    detections_per_image.labels(model_name=model_name).observe(len(detections))
+    
+    # Calculate and record confidence metrics
+    if detections:
+        confidences = [det.confidence for det in detections]
+        avg_conf = sum(confidences) / len(confidences)
+        avg_confidence_gauge.labels(model_name=model_name).set(avg_conf)
+        
+        for det in detections:
+            class_name = _class_name(det.class_id)
+            detection_counter.labels(class_name=class_name, model_name=model_name).inc()
+            confidence_histogram.labels(class_name=class_name).observe(det.confidence)
+            
+            if det.confidence < 0.5:
+                low_confidence_counter.labels(class_name=class_name, model_name=model_name).inc()
 
     session = SessionLocal()
     try:
