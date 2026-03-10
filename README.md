@@ -18,6 +18,17 @@ The core focus is on what was implemented and validated:
 
 These results improved significantly after fixing data split quality.
 
+### Experiment Tracking
+All training runs, hyperparameter comparisons, and metrics are tracked in Weights & Biases:
+
+📊 **[View Full Experiment Report on W&B](https://api.wandb.ai/links/navidkamal-islamic-university-of-technology/2odl87uh)**
+
+The report includes:
+- Run-to-run comparisons across different configurations
+- Loss curves and validation metrics over time
+- Hyperparameter impact analysis
+- Model performance evolution
+
 ## What Was Built
 
 ### 1. Data Versioning with DVC
