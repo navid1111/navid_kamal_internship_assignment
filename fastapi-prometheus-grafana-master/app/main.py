@@ -23,7 +23,7 @@ DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "mysql+pymysql://app_user:app_password@mysql:3306/predictions_db",
 )
-MODEL_PATH = os.getenv("MODEL_PATH", "/models/model.onnx")
+MODEL_PATH = os.getenv("MODEL_PATH", "/models/best.onnx")
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "/app/uploads"))
 CONF_THRESHOLD = float(os.getenv("CONF_THRESHOLD", "0.25"))
 IOU_THRESHOLD = float(os.getenv("IOU_THRESHOLD", "0.45"))

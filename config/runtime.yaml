@@ -18,7 +18,7 @@ runtime:
   train_project: runs/train
   train_name: pipeline_run
 
-  epochs: 10
+  epochs: 100
   imgsz: 640
   batch: 8
   use_wandb: true
