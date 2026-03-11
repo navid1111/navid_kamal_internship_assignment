@@ -9,6 +9,107 @@ The core focus is on what was implemented and validated:
 - FastAPI inference service with prediction logging
 - Prometheus + Grafana monitoring for model and service behavior
 
+## Getting Started
+
+### Prerequisites
+- Docker and Docker Compose installed
+- Python 3.9+ (for local development, optional)
+
+### Quick Start
+
+#### Step 1: Start the Main Infrastructure
+Navigate to the project root and start the main Docker containers:
+
+```bash
+# From the assignment root directory
+docker-compose up -d
+```
+
+This starts:
+- **Airflow**: http://localhost:8080 (username: `airflow`, password: `airflow`)
+- **Streamlit Dashboard**: http://localhost:8501
+- **MySQL Database**: localhost:3306 (credentials in docker-compose.yml)
+
+#### Step 2: Start the FastAPI + Prometheus + Grafana Stack
+In a new terminal, navigate to the FastAPI directory and start its services:
+
+```bash
+# Navigate to the FastAPI app directory
+cd fastapi-prometheus-grafana-master
+
+# Start FastAPI, Prometheus, and Grafana
+docker-compose up
+```
+
+This starts:
+- **FastAPI API**: http://localhost:8000 (API docs at `/docs`)
+- **Prometheus**: http://localhost:9090 (metrics database)
+- **Grafana**: http://localhost:3000 (dashboards, username: `admin`, password: `admin`)
+
+### Verify Everything is Running
+
+Check all services are healthy:
+
+```bash
+# Option 1: Check Docker containers
+docker-compose ps  # From assignment root
+cd fastapi-prometheus-grafana-master && docker-compose ps  # From FastAPI directory
+
+# Option 2: Test API health
+curl http://localhost:8000/health
+
+# Option 3: Check Prometheus
+curl http://localhost:9090/-/healthy
+```
+
+### First Steps with the API
+
+#### 1. Access API Documentation
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+#### 2. Run Your First Detection
+```bash
+# Upload an image for detection
+curl -X POST http://localhost:8000/predict \
+  -F "image=@/path/to/image.jpg"
+```
+
+#### 3. View Results
+```bash
+# List recent predictions
+curl http://localhost:8000/predictions
+
+# View specific prediction (replace 1 with actual ID)
+curl http://localhost:8000/predictions/1
+```
+
+#### 4. Check Prometheus Metrics
+```bash
+# View all collected metrics
+curl http://localhost:8000/metrics
+```
+
+#### 5. Monitor in Grafana
+1. Visit http://localhost:3000
+2. Login with `admin/admin`
+3. Navigate to Dashboards to view real-time metrics
+4. Key dashboards show:
+   - Prediction throughput
+   - Model inference latency
+   - Confidence score distribution
+   - Detection performance by class
+
+### Stopping Services
+
+```bash
+# Stop FastAPI stack (from fastapi-prometheus-grafana-master directory)
+docker-compose down
+
+# Stop main infrastructure (from assignment root)
+docker-compose down
+```
+
 ## Final Model Snapshot
 - Dataset classes: 76
 - mAP50: 0.919
@@ -86,8 +187,9 @@ Produced artifact:
 - `runs/train/pipeline_run/weights/best.onnx`
 
 ### 4. FastAPI Inference + Prediction Logging
-A FastAPI backend accepts images, runs ONNX inference, and stores prediction metadata in MySQL.
 
+A FastAPI backend accepts images, runs ONNX inference, and stores prediction metadata in MySQL.
+![FastAPI app UI](screencapture-localhost-8501-2026-03-11-20_03_13.png)
 Logged information includes:
 - Timestamp
 - Inference latency
