@@ -9,6 +9,9 @@ The core focus is on what was implemented and validated:
 - FastAPI inference service with prediction logging
 - Prometheus + Grafana monitoring for model and service behavior
 
+## Colab Notebook
+- Google Colab: https://colab.research.google.com/drive/1kQgV7Y1WdnaFq2ovuexW22Cbaxhha4hN?usp=sharing
+
 ## Getting Started
 
 ### Prerequisites
