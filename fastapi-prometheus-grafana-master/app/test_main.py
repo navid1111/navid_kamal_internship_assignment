@@ -3,6 +3,7 @@
 import io
 import os
 import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -10,8 +11,11 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-# Set a temp directory for tests to avoid CI permission issues
-os.environ["UPLOAD_DIR"] = tempfile.mkdtemp()
+# Set a temp directory for tests to avoid CI permission issues - BEFORE any imports
+TEST_UPLOAD_DIR = tempfile.mkdtemp()
+os.environ["UPLOAD_DIR"] = TEST_UPLOAD_DIR
+# Create the directory (required for StaticFiles mounting)
+Path(TEST_UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
 
 # Mock the detection service and database before importing the app
 with patch("app.detection.DetectionService"):

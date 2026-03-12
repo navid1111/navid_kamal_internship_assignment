@@ -17,6 +17,11 @@ INPUT_HW = (640, 640)  # Default input height, width for ONNX model
 
 # File uploads
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "/app/uploads"))
+try:
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+except PermissionError:
+    # In CI/test environments, directory creation may fail; app will use temp dir
+    pass
 
 # Database setup
 DB_WAIT_SECONDS = int(os.getenv("DB_WAIT_SECONDS", "240"))
