@@ -37,6 +37,8 @@ detection_service = DetectionService()
 @app.on_event("startup")
 def startup_event() -> None:
     """Initialize database and model on startup."""
+    # Create upload directory at runtime (not import time) to avoid CI issues
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     init_db()
     detection_service.initialize(MODEL_PATH)
 

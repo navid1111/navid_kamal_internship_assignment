@@ -1,12 +1,17 @@
 """Test cases for the FastAPI application."""
 
 import io
+import os
+import tempfile
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
+
+# Set a temp directory for tests to avoid CI permission issues
+os.environ["UPLOAD_DIR"] = tempfile.mkdtemp()
 
 # Mock the detection service and database before importing the app
 with patch("app.detection.DetectionService"):
