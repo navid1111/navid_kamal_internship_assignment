@@ -10,3 +10,5 @@ pillow
 numpy
 onnxruntime
 opencv-python-headless
+pytest
+httpx

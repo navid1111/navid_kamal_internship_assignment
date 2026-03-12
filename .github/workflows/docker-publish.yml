@@ -9,9 +9,32 @@ env:
   IMAGE_NAME: fastapi-app
 
 jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: fastapi-prometheus-grafana-master/app
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run tests
+        working-directory: fastapi-prometheus-grafana-master/app
+        run: PYTHONPATH="$PWD" pytest test_main.py -v
+
   build-and-push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    needs: test
 
     steps:
       - name: Checkout code
